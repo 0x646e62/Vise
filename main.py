@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import usuarios
+from app.routers import clientes
 
 app = FastAPI(
-    title="API Usuarios",
-    description="API para manejo de usuarios",
+    title="API Clientes",
+    description="API para manejo de clientes",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
@@ -18,7 +18,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(usuarios.router)
+app.include_router(clientes.router)
 
 if __name__ == "__main__":
     import uvicorn

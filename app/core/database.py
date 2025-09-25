@@ -1,56 +1,56 @@
 from datetime import datetime
 from typing import Dict, Optional
-from ..models.usuario import Usuario, UsuarioCreate, UsuarioUpdate
+from ..models.cliente import Cliente, ClienteCreate, ClienteUpdate
 
 class DatabaseManager:
     
     def __init__(self):
-        self._usuarios: Dict[int, dict] = {}
+        self._clientes: Dict[int, dict] = {}
         self._next_id = 1
     
-    def crear_usuario(self, usuario_data: UsuarioCreate) -> Usuario:
-        usuario_dict = {
+    def crear_cliente(self, cliente_data: ClienteCreate) -> Cliente:
+        cliente_dict = {
             "id": self._next_id,
-            "nombre": usuario_data.nombre,
-            "edad": usuario_data.edad,
-            "activo": usuario_data.activo,
+            "nombre": cliente_data.nombre,
+            "edad": cliente_data.edad,
+            "activo": cliente_data.activo,
             "creado_en": datetime.now(),
             "actualizado_en": None
         }
         
-        self._usuarios[self._next_id] = usuario_dict
+        self._clientes[self._next_id] = cliente_dict
         self._next_id += 1
         
-        return Usuario(**usuario_dict)
+        return Cliente(**cliente_dict)
     
-    def obtener_usuario(self, usuario_id: int) -> Optional[Usuario]:
-        usuario_dict = self._usuarios.get(usuario_id)
-        if usuario_dict:
-            return Usuario(**usuario_dict)
+    def obtener_cliente(self, cliente_id: int) -> Optional[Cliente]:
+        cliente_dict = self._clientes.get(cliente_id)
+        if cliente_dict:
+            return Cliente(**cliente_dict)
         return None
     
-    def listar_usuarios(self) -> list[Usuario]:
-        return [Usuario(**usuario_dict) for usuario_dict in self._usuarios.values()]
+    def listar_clientes(self) -> list[Cliente]:
+        return [Cliente(**cliente_dict) for cliente_dict in self._clientes.values()]
     
-    def actualizar_usuario(self, usuario_id: int, usuario_data: UsuarioUpdate) -> Optional[Usuario]:
-        if usuario_id not in self._usuarios:
+    def actualizar_cliente(self, cliente_id: int, cliente_data: ClienteUpdate) -> Optional[Cliente]:
+        if cliente_id not in self._clientes:
             return None
         
-        usuario_dict = self._usuarios[usuario_id]
+        cliente_dict = self._clientes[cliente_id]
         
-        update_data = usuario_data.model_dump(exclude_unset=True)
-        usuario_dict.update(update_data)
-        usuario_dict["actualizado_en"] = datetime.now()
+        update_data = cliente_data.model_dump(exclude_unset=True)
+        cliente_dict.update(update_data)
+        cliente_dict["actualizado_en"] = datetime.now()
         
-        return Usuario(**usuario_dict)
+        return Cliente(**cliente_dict)
     
-    def eliminar_usuario(self, usuario_id: int) -> Optional[Usuario]:
-        usuario_dict = self._usuarios.pop(usuario_id, None)
-        if usuario_dict:
-            return Usuario(**usuario_dict)
+    def eliminar_cliente(self, cliente_id: int) -> Optional[Cliente]:
+        cliente_dict = self._clientes.pop(cliente_id, None)
+        if cliente_dict:
+            return Cliente(**cliente_dict)
         return None
     
-    def contar_usuarios(self) -> int:
-        return len(self._usuarios)
+    def contar_clientes(self) -> int:
+        return len(self._clientes)
 
 db = DatabaseManager()

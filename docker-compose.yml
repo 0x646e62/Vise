@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  vise-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vise_app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./Vise:/app
+    restart: always

@@ -1,56 +1,68 @@
+
+
+
 from fastapi import APIRouter, HTTPException
-from ..models.cliente import (
-    Cliente, 
-    ClienteCreate, 
-    ClienteUpdate, 
-    ClienteResponse, 
-    ClientesListResponse
-)
+from ..models.cliente import ClientRequest, ClientResponse
 from ..core.database import db
 
-router = APIRouter(prefix="/clientes", tags=["clientes"])
+router = APIRouter()
 
-@router.post("/", response_model=ClienteResponse)
-async def crear_cliente(cliente: ClienteCreate):
-    nuevo_cliente = db.crear_cliente(cliente)
-    return ClienteResponse(
-        mensaje="Cliente creado exitosamente",
-        cliente=nuevo_cliente
+# POST /clientes
+@router.post("/clientes", response_model=ClientResponse)
+async def register_client(client: ClientRequest):
+    client_dict = db.register_client(client)
+    apto = client_dict["cardType"] == "Platinum" and client_dict["monthlyIncome"] >= 1000
+    status = "Registered"
+    if apto:
+        message = f"Cliente apto para tarjeta {client_dict['cardType']}"
+    else:
+        message = f"Cliente NO apto para tarjeta {client_dict['cardType']}"
+    return ClientResponse(
+        clientId=client_dict["clientId"],
+        name=client_dict["name"],
+        cardType=client_dict["cardType"],
+        status=status,
+        message=message
     )
 
-@router.get("/", response_model=ClientesListResponse)
-async def listar_clientes():
-    clientes = db.listar_clientes()
-    return ClientesListResponse(
-        clientes=clientes,
-        total=db.contar_clientes()
-    )
+# GET /clientes
+@router.get("/clientes")
+async def list_clients():
+    return db.list_clients()
 
-@router.get("/{cliente_id}", response_model=Cliente)
-async def obtener_cliente(cliente_id: int):
-    cliente = db.obtener_cliente(cliente_id)
-    if not cliente:
+# GET /clientes/{cliente_id}
+@router.get("/clientes/{cliente_id}")
+async def get_client(cliente_id: int):
+    client = db.get_client(cliente_id)
+    if not client:
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
-    return cliente
+    return client
 
-@router.put("/{cliente_id}", response_model=ClienteResponse)
-async def actualizar_cliente(cliente_id: int, cliente_data: ClienteUpdate):
-    cliente_actualizado = db.actualizar_cliente(cliente_id, cliente_data)
-    if not cliente_actualizado:
+# PUT /clientes/{cliente_id}
+@router.put("/clientes/{cliente_id}", response_model=ClientResponse)
+async def update_client(cliente_id: int, client: ClientRequest):
+    updated = db.update_client(cliente_id, client)
+    if not updated:
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
-    
-    return ClienteResponse(
-        mensaje="Cliente actualizado exitosamente",
-        cliente=cliente_actualizado
+    # Recalcular aptitud
+    apto = updated["cardType"] == "Platinum" and updated["monthlyIncome"] >= 1000
+    status = "Registered"
+    if apto:
+        message = f"Cliente apto para tarjeta {updated['cardType']}"
+    else:
+        message = f"Cliente NO apto para tarjeta {updated['cardType']}"
+    return ClientResponse(
+        clientId=updated["clientId"],
+        name=updated["name"],
+        cardType=updated["cardType"],
+        status=status,
+        message=message
     )
 
-@router.delete("/{cliente_id}", response_model=ClienteResponse)
-async def eliminar_cliente(cliente_id: int):
-    cliente_eliminado = db.eliminar_cliente(cliente_id)
-    if not cliente_eliminado:
+# DELETE /clientes/{cliente_id}
+@router.delete("/clientes/{cliente_id}")
+async def delete_client(cliente_id: int):
+    deleted = db.delete_client(cliente_id)
+    if not deleted:
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
-    
-    return ClienteResponse(
-        mensaje="Cliente eliminado exitosamente",
-        cliente=cliente_eliminado
-    )
+    return {"detail": "Cliente eliminado"}

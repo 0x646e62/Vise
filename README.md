@@ -2,11 +2,12 @@
 
 **Autores:**
 - Edgard Leonardo Patiño Largo
-- Edison Santiago Hurtado Campos  - Código limpio sin comentarios
+- Edison Santiago Hurtado Campos
+- Daniel Felipe Arenas Quiroga
 
 #### Tecnologías UtilizadasDocker
 
-### Ejecutar con Dockerniel Felipe Arenas Quiroga
+### Ejecutar con Docker
 
 API REST para manejo de clientes construida con FastAPI.
 
@@ -76,9 +77,11 @@ Una vez ejecutándose, puedes acceder a:
 curl -X POST "http://localhost:8000/clientes" \
      -H "Content-Type: application/json" \
      -d '{
-       "nombre": "Juan Pérez",
-       "edad": 30,
-       "activo": true
+       "name": "Juan Perez",
+       "country": "Mexico",
+       "monthlyIncome": 1200,
+       "viseClub": true,
+       "cardType": "Platinum"
      }'
 ```
 
@@ -86,6 +89,32 @@ curl -X POST "http://localhost:8000/clientes" \
 
 ```bash
 curl -X GET "http://localhost:8000/clientes"
+```
+
+### Obtener un cliente específico
+
+```bash
+curl -X GET "http://localhost:8000/clientes/1"
+```
+
+### Actualizar un cliente
+
+```bash
+curl -X PUT "http://localhost:8000/clientes/1" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "name": "Juan Perez",
+       "country": "Mexico",
+       "monthlyIncome": 1500,
+       "viseClub": true,
+       "cardType": "Platinum"
+     }'
+```
+
+### Eliminar un cliente
+
+```bash
+curl -X DELETE "http://localhost:8000/clientes/1"
 ```
 
 ## Arquitectura

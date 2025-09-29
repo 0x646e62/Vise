@@ -1,14 +1,16 @@
 
 
 
+
 from fastapi import APIRouter, HTTPException
 from ..models.cliente import ClientRequest, ClientResponse
+from ..models.purchase import PurchaseRequest, PurchaseResponse
 from ..core.database import db
 
 router = APIRouter()
 
 # POST /clientes
-@router.post("/clientes", response_model=ClientResponse)
+@router.post("/client", response_model=ClientResponse)
 async def register_client(client: ClientRequest):
     client_dict = db.register_client(client)
     apto = client_dict["cardType"] == "Platinum" and client_dict["monthlyIncome"] >= 1000
@@ -25,23 +27,23 @@ async def register_client(client: ClientRequest):
         message=message
     )
 
-# GET /clientes
-@router.get("/clientes")
+# GET /client
+@router.get("/client")
 async def list_clients():
     return db.list_clients()
 
-# GET /clientes/{cliente_id}
-@router.get("/clientes/{cliente_id}")
-async def get_client(cliente_id: int):
-    client = db.get_client(cliente_id)
+# GET /client/{client_id}
+@router.get("/client/{client_id}")
+async def get_client(client_id: int):
+    client = db.get_client(client_id)
     if not client:
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
     return client
 
-# PUT /clientes/{cliente_id}
-@router.put("/clientes/{cliente_id}", response_model=ClientResponse)
-async def update_client(cliente_id: int, client: ClientRequest):
-    updated = db.update_client(cliente_id, client)
+# PUT /client/{client_id}
+@router.put("/client/{client_id}", response_model=ClientResponse)
+async def update_client(client_id: int, client: ClientRequest):
+    updated = db.update_client(client_id, client)
     if not updated:
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
     # Recalcular aptitud
@@ -59,10 +61,102 @@ async def update_client(cliente_id: int, client: ClientRequest):
         message=message
     )
 
-# DELETE /clientes/{cliente_id}
-@router.delete("/clientes/{cliente_id}")
-async def delete_client(cliente_id: int):
-    deleted = db.delete_client(cliente_id)
+
+# DELETE /client/{client_id}
+@router.delete("/client/{client_id}")
+async def delete_client(client_id: int):
+    deleted = db.delete_client(client_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
     return {"detail": "Cliente eliminado"}
+
+
+# POST /purchase
+@router.post("/purchase", response_model=PurchaseResponse)
+async def process_purchase(purchase: PurchaseRequest):
+    client = db.get_client(purchase.clientId)
+    if not client:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado")
+
+    # Lógica de beneficios
+    from datetime import datetime
+    day_of_week = datetime.strptime(purchase.purchaseDate, "%Y-%m-%d").weekday()  # 0=Mon, 6=Sun
+    discount = 0
+    benefit = ""
+    card = client["cardType"].lower()
+    amount = purchase.amount
+    country = purchase.purchaseCountry
+    is_foreign = country.lower() != client["country"].lower()
+
+    # Classic: sin beneficios
+    if card == "classic":
+        status = "Approved"
+        benefit = "Sin beneficio"
+    # Gold
+    elif card == "gold":
+        if is_foreign:
+            discount = int(amount * 0.05)
+            benefit = "5% descuento internacional"
+        elif day_of_week == 0 and amount > 100:
+            discount = int(amount * 0.15)
+            benefit = "15% lunes >100usd"
+        else:
+            benefit = "Sin beneficio"
+        status = "Approved"
+    # Platinum
+    elif card == "platinum":
+        if is_foreign:
+            discount = int(amount * 0.05)
+            benefit = "5% descuento internacional"
+        elif day_of_week in [0,1,2] and amount > 100:
+            discount = int(amount * 0.20)
+            benefit = "20% lun-mie >100usd"
+        elif day_of_week == 5 and amount > 200:
+            discount = int(amount * 0.30)
+            benefit = "30% sabado >200usd"
+        else:
+            benefit = "Sin beneficio"
+        status = "Approved"
+    # Black
+    elif card == "black":
+        if is_foreign:
+            discount = int(amount * 0.05)
+            benefit = "5% descuento internacional"
+        elif day_of_week in [0,1,2] and amount > 100:
+            discount = int(amount * 0.25)
+            benefit = "25% lun-mie >100usd"
+        elif day_of_week == 5 and amount > 200:
+            discount = int(amount * 0.35)
+            benefit = "35% sabado >200usd"
+        else:
+            benefit = "Sin beneficio"
+        status = "Approved"
+    # White
+    elif card == "white":
+        if is_foreign:
+            discount = int(amount * 0.05)
+            benefit = "5% descuento internacional"
+        elif day_of_week in [0,1,2,3,4] and amount > 100:
+            discount = int(amount * 0.25)
+            benefit = "25% lun-vie >100usd"
+        elif day_of_week in [5,6] and amount > 200:
+            discount = int(amount * 0.35)
+            benefit = "35% sab-dom >200usd"
+        else:
+            benefit = "Sin beneficio"
+        status = "Approved"
+    else:
+        status = "Rejected"
+        benefit = "Tipo de tarjeta no válido"
+
+    final_amount = int(amount - discount)
+    purchase_info = {
+        "amount": amount,
+        "currency": purchase.currency,
+        "purchaseDate": purchase.purchaseDate,
+        "purchaseCountry": purchase.purchaseCountry,
+        "discountApplied": discount,
+        "finalAmount": final_amount,
+        "benefit": benefit
+    }
+    return PurchaseResponse(status=status, purchase=purchase_info)

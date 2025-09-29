@@ -14,10 +14,11 @@ router = APIRouter()
 async def register_client(client: ClientRequest):
     client_dict = db.register_client(client)
     apto = client_dict["cardType"] == "Platinum" and client_dict["monthlyIncome"] >= 1000
-    status = "Registered"
     if apto:
+        status = "Registered"
         message = f"Cliente apto para tarjeta {client_dict['cardType']}"
     else:
+        status = "Rejected"
         message = f"Cliente NO apto para tarjeta {client_dict['cardType']}"
     return ClientResponse(
         clientId=client_dict["clientId"],

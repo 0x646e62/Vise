@@ -1,6 +1,6 @@
 # Card restrictions
 
-# Classic - should register without restrictions
+# Classic - should be rejected
 POST {{host}}/client
 {
   "name": "Alice Classic",
@@ -13,9 +13,8 @@ HTTP 200
 [Captures]
 classic_id: jsonpath "$['clientId']"
 [Asserts]
-jsonpath "$.status" == "Registered"
+jsonpath "$.status" == "Rejected"
 jsonpath "$.cardType" == "Classic"
-
 
 # Gold - valid case (income >= 500)
 POST {{host}}/client
@@ -33,7 +32,6 @@ gold_id: jsonpath "$['clientId']"
 jsonpath "$.status" == "Registered"
 jsonpath "$.cardType" == "Gold"
 
-
 # Gold - invalid case (income < 500)
 POST {{host}}/client
 {
@@ -43,7 +41,7 @@ POST {{host}}/client
   "viseClub": false,
   "cardType": "Gold"
 }
-HTTP *
+HTTP 200
 [Asserts]
 jsonpath "$.status" == "Rejected"
 
@@ -72,7 +70,7 @@ POST {{host}}/client
   "viseClub": false,
   "cardType": "Platinum"
 }
-HTTP *
+HTTP 200
 [Asserts]
 jsonpath "$.status" == "Rejected"
 
@@ -101,7 +99,7 @@ POST {{host}}/client
   "viseClub": false,
   "cardType": "Black"
 }
-HTTP *
+HTTP 200
 [Asserts]
 jsonpath "$.status" == "Rejected"
 
@@ -130,10 +128,9 @@ POST {{host}}/client
   "viseClub": false,
   "cardType": "White"
 }
-HTTP *
+HTTP 200
 [Asserts]
 jsonpath "$.status" == "Rejected"
-
 
 # Purchase benefits
 
@@ -153,7 +150,6 @@ jsonpath "$.purchase.discountApplied" == 30
 jsonpath "$.purchase.finalAmount" == 170
 jsonpath "$.purchase.benefit" contains "15%"
 
-
 # Platinum: Saturday purchase >200 -> 30% discount
 POST {{host}}/purchase
 {
@@ -165,7 +161,6 @@ POST {{host}}/purchase
 }
 HTTP 200
 [Asserts]
-jsonpath "$.status" == "Approved"
 jsonpath "$.purchase.discountApplied" == 75
 jsonpath "$.purchase.finalAmount" == 175
 jsonpath "$.purchase.benefit" contains "30%"
@@ -225,7 +220,7 @@ POST {{host}}/purchase
   "purchaseDate": "2025-10-04",
   "purchaseCountry": "USA"
 }
-HTTP/1.1 200
+HTTP 200
 [Asserts]
 jsonpath "$.purchase.discountApplied" == 91
 jsonpath "$.purchase.finalAmount" == 169

@@ -9,17 +9,31 @@ from ..core.database import db
 
 router = APIRouter()
 
-# POST /clientes
 @router.post("/client", response_model=ClientResponse)
 async def register_client(client: ClientRequest):
     client_dict = db.register_client(client)
-    apto = client_dict["cardType"] == "Platinum" and client_dict["monthlyIncome"] >= 1000
-    if apto:
-        status = "Registered"
-        message = f"Cliente apto para tarjeta {client_dict['cardType']}"
+
+    card = client_dict["cardType"].lower()
+    income = client_dict["monthlyIncome"]
+    club = client_dict["viseClub"]
+    country = client_dict["country"].lower()
+
+    if card == "classic":
+        apto = False
+    elif card == "gold":
+        apto = income >= 500
+    elif card == "platinum":
+        apto = income >= 1000 and club
+    elif card == "black":
+        apto = income >= 2000 and club and country == "usa"
+    elif card == "white":
+        apto = income >= 2000 and club and country == "usa"
     else:
-        status = "Rejected"
-        message = f"Cliente NO apto para tarjeta {client_dict['cardType']}"
+        apto = False
+
+    status = "Registered" if apto else "Rejected"
+    message = f"Cliente {'apto' if apto else 'NO apto'} para tarjeta {client_dict['cardType']}"
+
     return ClientResponse(
         clientId=client_dict["clientId"],
         name=client_dict["name"],
@@ -41,19 +55,33 @@ async def get_client(client_id: int):
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
     return client
 
-# PUT /client/{client_id}
 @router.put("/client/{client_id}", response_model=ClientResponse)
 async def update_client(client_id: int, client: ClientRequest):
     updated = db.update_client(client_id, client)
     if not updated:
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
-    # Recalcular aptitud
-    apto = updated["cardType"] == "Platinum" and updated["monthlyIncome"] >= 1000
-    status = "Registered"
-    if apto:
-        message = f"Cliente apto para tarjeta {updated['cardType']}"
+
+    card = updated["cardType"].lower()
+    income = updated["monthlyIncome"]
+    club = updated["viseClub"]
+    country = updated["country"].lower()
+
+    if card == "classic":
+        apto = False
+    elif card == "gold":
+        apto = income >= 500
+    elif card == "platinum":
+        apto = income >= 1000 and club
+    elif card == "black":
+        apto = income >= 2000 and club and country == "usa"
+    elif card == "white":
+        apto = income >= 2000 and club and country == "usa"
     else:
-        message = f"Cliente NO apto para tarjeta {updated['cardType']}"
+        apto = False
+
+    status = "Registered" if apto else "Rejected"
+    message = f"Cliente {'apto' if apto else 'NO apto'} para tarjeta {updated['cardType']}"
+
     return ClientResponse(
         clientId=updated["clientId"],
         name=updated["name"],
@@ -61,7 +89,6 @@ async def update_client(client_id: int, client: ClientRequest):
         status=status,
         message=message
     )
-
 
 # DELETE /client/{client_id}
 @router.delete("/client/{client_id}")

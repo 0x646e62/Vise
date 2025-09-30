@@ -1,5 +1,6 @@
 services:
-  vise-api:
+  # Backend API
+  backend:
     build:
       context: .
       dockerfile: Dockerfile
@@ -12,10 +13,32 @@ services:
     volumes:
       - .:/app
       - /app/.venv
-    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    command:
+      ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+    networks:
+      - vise-network
+
+  # Frontend
+  frontend:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: vise-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    networks:
+      - vise-network
+
+networks:
+  vise-network:
+    driver: bridge

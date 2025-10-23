@@ -1,10 +1,10 @@
 import otel_setup  # activa OpenTelemetry
-
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import clientes
+from otel_setup import instrument_app
 
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
 app = FastAPI(
     title="API Clientes",
@@ -25,8 +25,7 @@ app.add_middleware(
 app.include_router(clientes.router)
 
 # Instrumenta del FastAPI
-FastAPIInstrumentor.instrument_app(app)
+instrument_app(app)
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=443, reload=True)
+ uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)

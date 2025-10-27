@@ -6,6 +6,11 @@ python-multipart==0.0.6
 pytest==7.4.3
 httpx==0.25.2
 
+fastapi
+uvicorn[standard]
+azure-monitor-opentelemetry
+
+
 opentelemetry-api
 opentelemetry-sdk
 opentelemetry-semantic-conventions
@@ -16,4 +21,6 @@ opentelemetry-exporter-otlp
 #opentelemetry-bootstrap --action=install
 
 
+
 #python -m uvicorn main:app --reload
+#opentelemetry-instrument <your_run_command>

@@ -3,7 +3,7 @@ import httpx
 import random
 import time
 
-API_URL = "http://127.0.0.1:8000"  # cambia si tu servidor está en otro host o puerto
+API_URL = "http://127.0.0.1:8002"  # cambia si tu servidor está en otro host o puerto
 
 # Datos base para clientes
 CARD_TYPES = ["classic", "gold", "platinum", "black", "white"]

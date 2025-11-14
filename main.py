@@ -1,13 +1,17 @@
-from azure.monitor.opentelemetry import configure_azure_monitor
 import os
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import clientes
 
-# --- Configurar Azure Monitor ---
-# Usa tu cadena de conexión desde Application Insights
-configure_azure_monitor(connection_string=os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"))
+# --- Cargar variables de entorno desde .env ---
+from dotenv import load_dotenv
+load_dotenv()
+
+# --- Configurar OpenTelemetry para Axiom ---
+# Cargar variables de entorno y configurar OTLP
+from axiom_setup import instrument_app
+os.environ.setdefault("OTEL_SDK_DISABLED", "false")
 
 # --- Crear la app FastAPI ---
 app = FastAPI(
@@ -17,6 +21,9 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+# --- Instrumentar con OpenTelemetry para Axiom ---
+instrument_app(app)
 
 # --- Middleware CORS ---
 app.add_middleware(

@@ -2,6 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import clientes
 
+import axiom_py
+
+client = axiom_py.Client("API_TOKEN")
+
 app = FastAPI(
     title="API Clientes",
     description="API para manejo de clientes",
